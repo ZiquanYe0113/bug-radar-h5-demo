@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" role="img" aria-label="Habitat photo placeholder">
+  <rect width="480" height="320" fill="#edf7f8"/>
+  <rect x="28" y="28" width="424" height="264" rx="18" fill="#fbfdfb" stroke="#b9c9bf" stroke-dasharray="10 8"/>
+  <path d="M72 230c46-36 78-38 128-8s92 32 142-8 74-38 100-14" fill="none" stroke="#509cb1" stroke-width="18" stroke-linecap="round" opacity=".55"/>
+  <path d="M96 230c18-56 48-88 92-110 28-14 64-36 86-66" fill="none" stroke="#18775a" stroke-width="12" stroke-linecap="round" opacity=".65"/>
+  <g fill="#2f8d66" opacity=".75">
+    <ellipse cx="178" cy="130" rx="34" ry="16" transform="rotate(-24 178 130)"/>
+    <ellipse cx="220" cy="102" rx="30" ry="14" transform="rotate(-18 220 102)"/>
+    <ellipse cx="260" cy="70" rx="28" ry="13" transform="rotate(-32 260 70)"/>
+  </g>
+  <path d="M160 262h160" stroke="#18775a" stroke-width="10" stroke-linecap="round" opacity=".35"/>
+</svg>

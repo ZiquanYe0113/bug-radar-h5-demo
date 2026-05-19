@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" role="img" aria-label="Bug photo placeholder">
+  <rect width="480" height="320" fill="#eef6f0"/>
+  <rect x="28" y="28" width="424" height="264" rx="18" fill="#fbfdfb" stroke="#b9c9bf" stroke-dasharray="10 8"/>
+  <g transform="translate(240 154)" fill="none" stroke="#18775a" stroke-width="10" stroke-linecap="round">
+    <ellipse cx="0" cy="0" rx="44" ry="58" fill="#d8eee2"/>
+    <path d="M-64 -26h-42M-64 0h-48M-64 26h-42M64 -26h42M64 0h48M64 26h42"/>
+    <path d="M-24 -60l-24 -32M24 -60l24 -32M-20 58l-22 34M20 58l22 34"/>
+    <circle cx="0" cy="-72" r="24" fill="#d8eee2"/>
+  </g>
+  <path d="M158 252h164" stroke="#18775a" stroke-width="10" stroke-linecap="round" opacity=".45"/>
+</svg>
