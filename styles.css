@@ -530,6 +530,13 @@ button {
   color: var(--ink);
 }
 
+.secondary-btn.compact {
+  min-height: 34px;
+  width: fit-content;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
 .text-btn {
   border: 0;
   background: transparent;
@@ -539,6 +546,107 @@ button {
 
 .radar {
   padding: 14px;
+}
+
+.admin-stats,
+.admin-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat-card,
+.admin-card,
+.admin-report {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.stat-card {
+  display: grid;
+  gap: 5px;
+  padding: 12px 10px;
+  min-width: 0;
+}
+
+.stat-card span,
+.stat-card small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.stat-card strong {
+  color: var(--brand);
+  font-size: 20px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.admin-card {
+  padding: 12px;
+}
+
+.metric-row {
+  display: grid;
+  gap: 7px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.metric-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.metric-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.metric-label strong {
+  overflow-wrap: anywhere;
+}
+
+.metric-label span {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.metric-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.metric-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+}
+
+.admin-report-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-report {
+  padding: 12px;
+}
+
+.admin-report p {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .map-board {

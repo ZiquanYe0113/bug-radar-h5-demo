@@ -226,6 +226,7 @@ function dbStatusCard() {
       </div>
       <div class="weather-metric">${enabled ? "Supabase REST" : "localStorage"}</div>
       <p class="subtle">${enabled ? "上报会先本地保存，再同步到云端表。" : "未配置 Supabase 前，上报只保存在当前浏览器。"}</p>
+      <button class="secondary-btn compact" data-route="admin">${icon("report")}查看后台</button>
     </article>
   `;
 }
@@ -884,6 +885,7 @@ function renderReport() {
       <div class="quick-actions">
         <button class="primary-btn" id="submit-report">${icon("report")}提交上报</button>
         <button class="secondary-btn" data-toast="照片上传将在后续接入，区分虫体照片和叮咬反应照片，默认不保存敏感图片。">${icon("eye")}添加照片</button>
+        <button class="secondary-btn" data-route="admin">${icon("radar")}查看上报后台</button>
       </div>
     </section>
     <section class="section">
@@ -970,14 +972,122 @@ function reportDynamicFields(type) {
 }
 
 function reportItem(item) {
+  const normalized = normalizeReport(item);
   return `
     <article class="report-item">
       <div class="section-head">
-        <strong>${item.bug}</strong>
-        <span class="pill low">${item.type || "模拟"}</span>
+        <strong>${normalized.bug}</strong>
+        <span class="pill ${normalized.status === "pending" ? "mid" : "low"}">${normalized.type}</span>
       </div>
-      <div class="subtle">${item.place} · ${item.text}</div>
-      ${item.extra ? `<div class="meta-row">${item.extra.map((x) => `<span class="tag">${x}</span>`).join("")}</div>` : ""}
+      <div class="subtle">${normalized.place} · ${normalized.text}</div>
+      ${normalized.extra.length ? `<div class="meta-row">${normalized.extra.map((x) => `<span class="tag">${x}</span>`).join("")}</div>` : ""}
+    </article>
+  `;
+}
+
+function normalizeReport(item) {
+  return {
+    type: item.type || "模拟",
+    place: item.place || "杭州",
+    bug: item.bug || "不确定",
+    text: item.text || "无补充描述",
+    extra: Array.isArray(item.extra) ? item.extra.filter(Boolean) : [],
+    status: item.status || (item.createdAt ? "pending" : "seeded"),
+    createdAt: item.createdAt || item.created_at || ""
+  };
+}
+
+function countBy(items, getter) {
+  return items.reduce((acc, item) => {
+    const key = getter(item) || "未填写";
+    acc.set(key, (acc.get(key) || 0) + 1);
+    return acc;
+  }, new Map());
+}
+
+function topCounts(items, getter, limit = 5) {
+  return [...countBy(items, getter).entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit);
+}
+
+function shortPlace(place) {
+  return place.replace(/^杭州\s*·\s*/, "").replace(/\/.*$/, "");
+}
+
+function renderAdmin() {
+  const reports = getReports().map(normalizeReport);
+  const pending = reports.filter((report) => report.status === "pending").length;
+  const bugRows = topCounts(reports, (report) => report.bug, 5);
+  const placeRows = topCounts(reports, (report) => shortPlace(report.place), 5);
+  const maxBug = Math.max(...bugRows.map((row) => row[1]), 1);
+  const maxPlace = Math.max(...placeRows.map((row) => row[1]), 1);
+  return appFrame(`
+    <button class="back-btn" data-route="home">${icon("back")}返回首页</button>
+    <section class="page-title">
+      <h1>上报审核后台</h1>
+      <p>这是第一阶段的运营工作台雏形：先把上报数据看得见、导得出、能反哺首页风险；后面接 Supabase 后就能变成真实后台。</p>
+    </section>
+    <section class="admin-stats">
+      ${adminStat("总上报", reports.length, "含本地、云端和演示种子")}
+      ${adminStat("待审核", pending, "用户新增默认待审核")}
+      ${adminStat("重点虫类", bugRows[0]?.[0] || "暂无", "当前样本最高频")}
+    </section>
+    <section class="section">
+      <div class="quick-actions">
+        <button class="primary-btn" id="export-reports">${icon("report")}导出 CSV</button>
+        <a class="secondary-btn" href="#/report">${icon("report")}新增上报</a>
+      </div>
+    </section>
+    <section class="section admin-grid">
+      <article class="admin-card">
+        <div class="section-head"><h2>虫类分布</h2><span class="pill low">${bugRows.length} 类</span></div>
+        ${bugRows.map(([label, count]) => metricBar(label, count, maxBug)).join("")}
+      </article>
+      <article class="admin-card">
+        <div class="section-head"><h2>热点地点</h2><span class="pill low">${placeRows.length} 个</span></div>
+        ${placeRows.map(([label, count]) => metricBar(label, count, maxPlace)).join("")}
+      </article>
+    </section>
+    <section class="section">
+      <div class="section-head"><h2>最新上报</h2><span class="pill mid">${reports.length} 条</span></div>
+      <div class="admin-report-list">
+        ${reports.map(adminReportItem).join("")}
+      </div>
+    </section>
+  `);
+}
+
+function adminStat(label, value, note) {
+  return `
+    <article class="stat-card">
+      <span>${label}</span>
+      <strong>${value}</strong>
+      <small>${note}</small>
+    </article>
+  `;
+}
+
+function metricBar(label, count, max) {
+  const width = Math.max(12, Math.round((count / max) * 100));
+  return `
+    <div class="metric-row">
+      <div class="metric-label"><strong>${label}</strong><span>${count} 条</span></div>
+      <div class="metric-track"><span style="width:${width}%"></span></div>
+    </div>
+  `;
+}
+
+function adminReportItem(report) {
+  return `
+    <article class="admin-report">
+      <div class="section-head">
+        <strong>${report.bug}</strong>
+        <span class="pill ${report.status === "pending" ? "mid" : "low"}">${report.status === "pending" ? "待审核" : "演示数据"}</span>
+      </div>
+      <div class="subtle">${report.type} · ${report.place}</div>
+      <p>${report.text}</p>
+      ${report.extra.length ? `<div class="meta-row">${report.extra.map((x) => `<span class="tag">${x}</span>`).join("")}</div>` : ""}
     </article>
   `;
 }
@@ -1063,7 +1173,7 @@ async function loadRemoteReports() {
   state.remoteReportsLoaded = true;
   const base = supabaseConfig.url.replace(/\/$/, "");
   const table = encodeURIComponent(supabaseConfig.table);
-  const endpoint = `${base}/rest/v1/${table}?select=type,place,bug,text,extra,created_at&order=created_at.desc&limit=20`;
+  const endpoint = `${base}/rest/v1/${table}?select=type,place,bug,text,extra,status,created_at&order=created_at.desc&limit=20`;
   try {
     const res = await fetch(endpoint, {
       headers: {
@@ -1079,6 +1189,7 @@ async function loadRemoteReports() {
       bug: row.bug,
       text: row.text,
       extra: Array.isArray(row.extra) ? row.extra : [],
+      status: row.status || "pending",
       createdAt: row.created_at
     }));
     state.remoteStatus = "ready";
@@ -1175,6 +1286,39 @@ function showToast(text) {
   setTimeout(() => toast.remove(), 2100);
 }
 
+function csvCell(value) {
+  const text = String(value ?? "").replace(/"/g, '""');
+  return `"${text}"`;
+}
+
+function reportsToCsv(reports) {
+  const header = ["type", "place", "bug", "text", "extra", "status", "createdAt"];
+  const rows = reports.map((report) => [
+    report.type,
+    report.place,
+    report.bug,
+    report.text,
+    report.extra.join("|"),
+    report.status,
+    report.createdAt
+  ]);
+  return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+}
+
+function exportReportsCsv() {
+  const csv = reportsToCsv(getReports().map(normalizeReport));
+  const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `bug-radar-reports-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast("已导出 CSV，可用于人工整理和专家复核。");
+}
+
 function route() {
   const name = location.hash.replace("#/", "").split("?")[0] || "home";
   const routes = {
@@ -1185,6 +1329,7 @@ function route() {
     detail: renderDetail,
     family: renderFamily,
     report: renderReport,
+    admin: renderAdmin,
     demo: renderDemoGuide
   };
   return (routes[name] || renderHome)();
@@ -1211,6 +1356,7 @@ function bindEvents() {
   });
 
   document.querySelector("#submit-report")?.addEventListener("click", saveReport);
+  document.querySelector("#export-reports")?.addEventListener("click", exportReportsCsv);
 }
 
 function render() {
