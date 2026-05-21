@@ -2,4 +2,4 @@
 rendered_mvp_doc/
 *.tmp
 *.log
-
+config.local.js

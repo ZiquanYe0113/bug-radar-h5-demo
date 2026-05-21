@@ -287,6 +287,79 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.integration-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.integration-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.integration-title {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c8d2cc;
+}
+
+.status-dot.ok {
+  background: var(--ok);
+  box-shadow: 0 0 0 4px rgba(47, 141, 102, 0.12);
+}
+
+.weather-metric {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--brand);
+  line-height: 1.2;
+}
+
+.amap-box {
+  min-height: 118px;
+  overflow: hidden;
+  border: 1px solid #cddfd4;
+  border-radius: 8px;
+  background: #d8eef0;
+}
+
+.amap-box.fallback {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  text-align: center;
+  color: #385d68;
+  background:
+    radial-gradient(circle at 28% 42%, rgba(214, 107, 61, 0.28) 0 6px, transparent 7px),
+    radial-gradient(circle at 68% 58%, rgba(24, 119, 90, 0.22) 0 7px, transparent 8px),
+    linear-gradient(140deg, #d8eadc 0 46%, #b9dfe7 47% 54%, #e4f0dc 55% 100%);
+}
+
+.amap-box.fallback span {
+  position: relative;
+  z-index: 1;
+  max-width: 180px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .entry-btn {
   min-height: 104px;
   border: 1px solid var(--line);

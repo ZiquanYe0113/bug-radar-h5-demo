@@ -11,6 +11,16 @@ const icons = {
   warn: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>`
 };
 
+const appConfig = window.APP_CONFIG || {};
+const defaultLocation = appConfig.defaultLocation || {
+  name: "杭州",
+  latitude: 30.2741,
+  longitude: 120.1551
+};
+const weatherConfig = appConfig.weather || {};
+const amapConfig = appConfig.amap || {};
+const supabaseConfig = appConfig.supabase || {};
+
 const bugs = [
   { id: "midge", name: "蠓", alias: "小咬、小黑蚊、墨蚊、咬蠓", priority: "P0", danger: "中", tags: ["近水", "湿地", "草丛", "山脚", "树荫", "潮湿"], scene: "西湖景区山脚、余杭/临安山地、溪流河渠、树荫潮湿点位", feature: "体型很小，常仅 1-4 毫米，黑色或深褐色；停在皮肤上像黑点。", bite: "会叮咬，多发红斑、丘疹、肿块，瘙痒明显，部分人可持续数日。", protect: "离开背阴潮湿点位；穿浅色长袖长裤；使用含 DEET、派卡瑞丁等有效成分的驱避产品并按说明补涂。", care: "清洁叮咬处，冷敷，避免抓挠；瘙痒明显可咨询药师或医生。", doctor: "红肿持续扩大、明显疼痛或发热、渗液化脓、出现全身不适时建议就医。", note: "与摇蚊区别：摇蚊常成团飞舞但通常不咬人；蠓更小，更贴近皮肤叮咬。", commerce: "户外驱避产品、皮肤止痒护理、附近药店/皮肤科", verify: "需昆虫/疾控核验" },
   { id: "mosquito", name: "蚊子", alias: "库蚊、伊蚊、按蚊等", priority: "P0", danger: "中", tags: ["积水", "绿化", "近水", "小区", "室内"], scene: "小区、家中、江边、公园、积水点、地下车库、绿化带", feature: "细长身体、长足，不同蚊种体色和花纹不同。", bite: "雌蚊吸血叮咬，常见局部红肿、瘙痒、风团样丘疹。", protect: "清除积水；安装纱窗纱门；户外使用有效驱蚊剂；夜间可用蚊帐、电蚊拍。", care: "清洗叮咬处，冷敷止痒，避免抓破；儿童和敏感人群用药需谨慎。", doctor: "出现发热、皮疹、头痛、关节痛等全身症状，或叮咬处感染迹象，建议就医并说明叮咬史。", note: "不要只按包的形状判断虫种，要结合时间、地点、是否看到虫、暴露部位。", commerce: "驱蚊用品、纱窗纱门、灭蚊灯、社区灭蚊服务", verify: "基础可信，需本地化核验" },
@@ -41,7 +51,18 @@ const state = {
   sighting: "贴肤小黑点",
   familyBug: "mosquito",
   planScenario: "西湖景区山脚短停",
-  reportType: "被咬了"
+  reportType: "被咬了",
+  weather: {
+    status: "idle",
+    summary: "等待联网获取",
+    temperature: null,
+    humidity: null,
+    precipitation: null,
+    wind: null
+  },
+  remoteReports: [],
+  remoteReportsLoaded: false,
+  remoteStatus: "local"
 };
 
 const imageManifest = {
@@ -118,6 +139,95 @@ function topScenarioRows(limit = 4) {
   return [...scenarios]
     .sort((a, b) => scenarioRiskScore(b) - scenarioRiskScore(a))
     .slice(0, limit);
+}
+
+function supabaseEnabled() {
+  return Boolean(supabaseConfig.url && supabaseConfig.anonKey && supabaseConfig.table);
+}
+
+function amapEnabled() {
+  return Boolean(amapConfig.key);
+}
+
+function configStatusLabel(enabled) {
+  return enabled ? "已配置" : "未配置";
+}
+
+function weatherRiskHint() {
+  const { humidity, precipitation, wind } = state.weather;
+  if (humidity === null) return "未接入前使用本地规则。";
+  if (humidity >= 78 && wind <= 2.5) return "湿度高、风小，近水和绿化点位虫感会更明显。";
+  if (precipitation > 0) return "降雨会增加积水线索，雨后小区和河渠需重点关注。";
+  if (wind >= 5) return "风较大，江边和开阔地飞虫活动通常会下降。";
+  return "天气条件平稳，继续按地点微环境判断。";
+}
+
+function integrationPanel() {
+  return `
+    <section class="section">
+      <div class="section-head">
+        <h2>联网 MVP 状态</h2>
+        <span class="subtle">第一阶段接口基座</span>
+      </div>
+      <div class="integration-grid">
+        ${weatherCard()}
+        ${mapStatusCard()}
+        ${dbStatusCard()}
+      </div>
+    </section>
+  `;
+}
+
+function weatherCard() {
+  const weather = state.weather;
+  const badgeClass = weather.status === "error" ? "mid" : "low";
+  const metric = weather.status === "ready"
+    ? `${Math.round(weather.temperature)}°C · 湿度 ${Math.round(weather.humidity)}%`
+    : weather.summary;
+  return `
+    <article class="integration-card">
+      <div class="integration-title">
+        <span class="status-dot ${weather.status === "ready" ? "ok" : ""}"></span>
+        <strong>天气风险</strong>
+        <span class="pill ${badgeClass}">${weather.status === "ready" ? "已联网" : "演示"}</span>
+      </div>
+      <div class="weather-metric">${metric}</div>
+      <p class="subtle">${weatherRiskHint()}</p>
+    </article>
+  `;
+}
+
+function mapStatusCard() {
+  const enabled = amapEnabled();
+  return `
+    <article class="integration-card">
+      <div class="integration-title">
+        <span class="status-dot ${enabled ? "ok" : ""}"></span>
+        <strong>地图定位</strong>
+        <span class="pill ${enabled ? "low" : "mid"}">${configStatusLabel(enabled)}</span>
+      </div>
+      <div id="amap-container" class="amap-box ${enabled ? "" : "fallback"}">
+        <span>${enabled ? "正在加载高德地图" : "未填高德 Key，先显示杭州示意底图"}</span>
+      </div>
+      <p class="subtle">接入后可把上报按经纬度聚合到附近风险。</p>
+    </article>
+  `;
+}
+
+function dbStatusCard() {
+  const enabled = supabaseEnabled();
+  const label = enabled ? (state.remoteStatus === "ready" ? "已连接" : "已配置") : "本地";
+  return `
+    <article class="integration-card">
+      <div class="integration-title">
+        <span class="status-dot ${state.remoteStatus === "ready" ? "ok" : ""}"></span>
+        <strong>上报数据库</strong>
+        <span class="pill ${enabled ? "low" : "mid"}">${label}</span>
+      </div>
+      <div class="weather-metric">${enabled ? "Supabase REST" : "localStorage"}</div>
+      <p class="subtle">${enabled ? "上报会先本地保存，再同步到云端表。" : "未配置 Supabase 前，上报只保存在当前浏览器。"}</p>
+    </article>
+  `;
 }
 
 function photoItem(kind, label, src, options = {}) {
@@ -252,6 +362,8 @@ function renderHome() {
         <a class="secondary-btn" href="#/seen">${icon("eye")}看到虫了</a>
       </div>
     </section>
+
+    ${integrationPanel()}
 
     <section class="section">
       <div class="section-head">
@@ -877,9 +989,9 @@ function getReports() {
     { type: "被咬了", place: "萧山村镇河渠", bug: "蚊子", text: "傍晚散步被叮咬，附近有积水。", extra: ["河渠积水", "单个风团"] }
   ];
   try {
-    return [...JSON.parse(localStorage.getItem("bugReports") || "[]"), ...seeded];
+    return [...state.remoteReports, ...JSON.parse(localStorage.getItem("bugReports") || "[]"), ...seeded];
   } catch {
-    return seeded;
+    return [...state.remoteReports, ...seeded];
   }
 }
 
@@ -896,11 +1008,161 @@ function saveReport() {
     document.querySelector("#report-body")?.value,
     document.querySelector("#report-pattern")?.value
   ].filter(Boolean);
+  const report = {
+    type,
+    place,
+    bug,
+    text,
+    extra,
+    latitude: defaultLocation.latitude,
+    longitude: defaultLocation.longitude,
+    createdAt: new Date().toISOString()
+  };
   const stored = JSON.parse(localStorage.getItem("bugReports") || "[]");
-  const next = [{ type, place, bug, text, extra, createdAt: new Date().toISOString() }, ...stored].slice(0, 12);
+  const next = [report, ...stored].slice(0, 12);
   localStorage.setItem("bugReports", JSON.stringify(next));
-  showToast("已提交模拟上报，首页和出门页会以低权重参考。");
+  syncReportToRemote(report);
+  showToast(supabaseEnabled() ? "已提交，上报会尝试同步到云端数据库。" : "已提交模拟上报，首页和出门页会以低权重参考。");
   render();
+}
+
+async function loadWeather() {
+  if (state.weather.status !== "idle") return;
+  state.weather.status = "loading";
+  const latitude = defaultLocation.latitude;
+  const longitude = defaultLocation.longitude;
+  const endpoint = weatherConfig.endpoint || `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=Asia%2FShanghai`;
+  try {
+    const res = await fetch(endpoint);
+    if (!res.ok) throw new Error(`weather ${res.status}`);
+    const data = await res.json();
+    const current = data.current || {};
+    state.weather = {
+      status: "ready",
+      summary: "杭州实时天气",
+      temperature: Number(current.temperature_2m ?? 0),
+      humidity: Number(current.relative_humidity_2m ?? 0),
+      precipitation: Number(current.precipitation ?? 0),
+      wind: Number(current.wind_speed_10m ?? 0)
+    };
+  } catch {
+    state.weather = {
+      status: "error",
+      summary: "天气暂不可用",
+      temperature: null,
+      humidity: null,
+      precipitation: null,
+      wind: null
+    };
+  }
+  render();
+}
+
+async function loadRemoteReports() {
+  if (!supabaseEnabled() || state.remoteReportsLoaded) return;
+  state.remoteReportsLoaded = true;
+  const base = supabaseConfig.url.replace(/\/$/, "");
+  const table = encodeURIComponent(supabaseConfig.table);
+  const endpoint = `${base}/rest/v1/${table}?select=type,place,bug,text,extra,created_at&order=created_at.desc&limit=20`;
+  try {
+    const res = await fetch(endpoint, {
+      headers: {
+        apikey: supabaseConfig.anonKey,
+        Authorization: `Bearer ${supabaseConfig.anonKey}`
+      }
+    });
+    if (!res.ok) throw new Error(`supabase ${res.status}`);
+    const rows = await res.json();
+    state.remoteReports = rows.map((row) => ({
+      type: row.type,
+      place: row.place,
+      bug: row.bug,
+      text: row.text,
+      extra: Array.isArray(row.extra) ? row.extra : [],
+      createdAt: row.created_at
+    }));
+    state.remoteStatus = "ready";
+  } catch {
+    state.remoteStatus = "error";
+  }
+  render();
+}
+
+async function syncReportToRemote(report) {
+  if (!supabaseEnabled()) return;
+  const base = supabaseConfig.url.replace(/\/$/, "");
+  const endpoint = `${base}/rest/v1/${encodeURIComponent(supabaseConfig.table)}`;
+  const payload = {
+    type: report.type,
+    place: report.place,
+    bug: report.bug,
+    text: report.text,
+    extra: report.extra,
+    latitude: report.latitude,
+    longitude: report.longitude,
+    status: "pending"
+  };
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: supabaseConfig.anonKey,
+        Authorization: `Bearer ${supabaseConfig.anonKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`supabase ${res.status}`);
+    state.remoteStatus = "ready";
+  } catch {
+    state.remoteStatus = "error";
+    showToast("本地已保存，云端同步暂时失败。");
+  }
+}
+
+function hydrateIntegrations() {
+  loadWeather();
+  loadRemoteReports();
+  hydrateAmap();
+}
+
+function loadAmapScript() {
+  if (window.AMap) return Promise.resolve();
+  if (window.__bugRadarAmapLoading) return window.__bugRadarAmapLoading;
+  if (amapConfig.securityJsCode) {
+    window._AMapSecurityConfig = { securityJsCode: amapConfig.securityJsCode };
+  }
+  window.__bugRadarAmapLoading = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(amapConfig.key)}&plugin=AMap.Geolocation,AMap.Marker`;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return window.__bugRadarAmapLoading;
+}
+
+async function hydrateAmap() {
+  const container = document.querySelector("#amap-container");
+  if (!container || !amapEnabled() || container.dataset.mounted) return;
+  container.dataset.mounted = "true";
+  try {
+    await loadAmapScript();
+    const map = new window.AMap.Map(container, {
+      zoom: 11,
+      center: [defaultLocation.longitude, defaultLocation.latitude],
+      viewMode: "2D"
+    });
+    new window.AMap.Marker({
+      position: [defaultLocation.longitude, defaultLocation.latitude],
+      title: defaultLocation.name,
+      map
+    });
+  } catch {
+    container.classList.add("fallback");
+    container.innerHTML = "<span>地图加载失败，继续使用杭州示意底图</span>";
+  }
 }
 
 function showToast(text) {
@@ -954,6 +1216,7 @@ function bindEvents() {
 function render() {
   document.querySelector("#app").innerHTML = route();
   bindEvents();
+  hydrateIntegrations();
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 

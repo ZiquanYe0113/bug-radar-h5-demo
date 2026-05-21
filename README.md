@@ -21,6 +21,7 @@ http://localhost:4173/index.html
 如果要发给别人，把这些文件和目录一起打包：
 
 - `index.html`
+- `config.js`
 - `styles.css`
 - `app.js`
 - `assets/`
@@ -34,6 +35,24 @@ http://localhost:4173/index.html
 - 虫类详情：展示场景、特征、防护、处理、核验状态和图片证据位。
 - 家庭防虫：蚊子、蟑螂、蛾蚋、果蝇、跳蚤的家庭治理清单。
 - 用户上报：分为被咬了、看到虫、家里有虫三类，上报会以低权重反馈到首页和出门页。
+
+## 第一阶段联网 MVP
+
+当前版本已经预留 3 个真实服务接口：
+
+- 天气风险：默认使用 Open-Meteo 获取杭州实时温度、湿度、降雨和风速。
+- 地图定位：`config.js` 填入高德 Web JS API Key 后，首页会加载真实地图。
+- 上报数据库：`config.js` 填入 Supabase URL 和 anon key 后，用户上报会先本地保存，再同步到 `bug_reports` 表。
+
+配置文件是 `config.js`。现在里面是空 Key，可直接展示 Demo；正式接入时只填浏览器端允许公开的 Key，不要放服务端密钥。
+
+Supabase 建表 SQL 放在：
+
+```text
+SUPABASE_SCHEMA.sql
+```
+
+在 Supabase SQL Editor 里执行后，再把 `url`、`anonKey` 填到 `config.js`。
 
 ## 数据与规则
 
@@ -70,7 +89,8 @@ http://localhost:4173/index.html
 ## 下一步接入
 
 - 真实虫体和叮咬图片素材。
-- 天气 API、定位和地图展示。
+- 高德地图 Key、Supabase 项目和线上上报审核后台。
 - 更细的杭州区域规则。
+- AI 识图：虫体照片优先，叮咬反应图只做低置信提示。
 - 专家核验后的医学/疾控提示文案。
 - 小程序迁移。
