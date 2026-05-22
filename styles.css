@@ -933,6 +933,77 @@ button {
   background: #fbfdfb;
 }
 
+.report-result-hero {
+  display: grid;
+  gap: 12px;
+  background: linear-gradient(180deg, #f7fbf8 0%, #ffffff 100%);
+}
+
+.report-result-hero h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.report-result-hero p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.report-result-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.report-result-card {
+  display: grid;
+  gap: 12px;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.evidence-item {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfb;
+}
+
+.evidence-item.done {
+  border-color: #b9dcc7;
+  background: #f1f8f3;
+}
+
+.evidence-item strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.evidence-item span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.action-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .candidate {
   display: flex;
   align-items: flex-start;
@@ -1262,6 +1333,10 @@ button {
 @media (min-width: 720px) {
   .app-shell {
     padding-top: 24px;
+  }
+
+  .report-result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

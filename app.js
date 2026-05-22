@@ -1208,6 +1208,7 @@ function reportItem(item) {
 
 function normalizeReport(item) {
   return {
+    id: item.id || "",
     type: item.type || "模拟",
     place: item.place || "杭州",
     bug: item.bug || "不确定",
@@ -1219,6 +1220,137 @@ function normalizeReport(item) {
     status: item.status || (item.createdAt ? "pending" : "seeded"),
     createdAt: item.createdAt || item.created_at || ""
   };
+}
+
+function findReportById(id) {
+  const reports = getReports().map(normalizeReport);
+  if (!id) return reports.find((report) => report.status === "pending") || reports[0];
+  return reports.find((report) => report.id === id) || reports[0];
+}
+
+function reportAnalysisTags(report) {
+  const text = `${report.type} ${report.place} ${report.bug} ${report.text} ${report.extra.join(" ")} ${report.photoKinds.join(" ")}`;
+  const tags = [report.type, report.place, report.bug, report.text, ...report.extra, ...report.photoKinds];
+  if (text.includes("西湖") || text.includes("湖岸") || text.includes("运河") || text.includes("钱塘江")) tags.push("近水", "湖边", "河边", "灯光", "摇蚊", "蚊子");
+  if (text.includes("湿地") || text.includes("潮湿") || text.includes("树荫")) tags.push("湿地", "潮湿", "蠓", "蚊子");
+  if (text.includes("草") || text.includes("山") || text.includes("林") || text.includes("附着")) tags.push("草丛", "林地", "蜱虫");
+  if (text.includes("地漏") || text.includes("卫生间") || text.includes("下水道")) tags.push("蛾蚋", "地漏", "下水道");
+  if (text.includes("厨房") || text.includes("爬行")) tags.push("蟑螂", "厨房");
+  if (text.includes("水果") || text.includes("垃圾桶")) tags.push("果蝇", "水果");
+  if (text.includes("宠物") || text.includes("脚踝") || text.includes("成串")) tags.push("跳蚤", "脚踝", "宠物");
+  if (text.includes("黑橙") || text.includes("条索") || text.includes("水疱")) tags.push("隐翅虫", "灯光");
+  return tags;
+}
+
+function reportCandidates(report) {
+  const knownBug = bugs.some((bug) => bug.name === report.bug) ? report.bug : "";
+  return scoreBugs(reportAnalysisTags(report), {
+    indoor: report.type === "家里有虫" || /家|厨房|卫生间|地漏|宠物/.test(report.place),
+    seen: knownBug
+  }).slice(0, 3);
+}
+
+function reportRiskAdvice(report, candidates) {
+  const top = candidates[0];
+  const hasBite = report.photoKinds.includes("叮咬反应照片") || report.type === "被咬了";
+  const hasBugPhoto = report.photoKinds.includes("虫体照片");
+  const urgentText = `${report.text} ${report.extra.join(" ")}`;
+  if (/发热|头痛|乏力|化脓|渗液|明显疼痛|无法取出|蜱/.test(urgentText) || top?.bug.name === "蜱虫") {
+    return {
+      level: "高",
+      title: "建议人工/专业核验",
+      body: "信息里出现高风险信号，先不要只依赖自动识别。若有全身不适、红肿扩大或疑似蜱虫附着，建议及时就医或咨询疾控/医生。"
+    };
+  }
+  if (!hasBugPhoto && report.type !== "被咬了") {
+    return {
+      level: "中",
+      title: "建议补充虫体照片",
+      body: "目前主要依赖文字和地点判断，置信度有限。补充清晰虫体照片后，后续 AI 识别和人工核验都会更可靠。"
+    };
+  }
+  if (hasBite && !hasBugPhoto) {
+    return {
+      level: "中",
+      title: "伤口照只做风险提示",
+      body: "皮肤反应不能直接反推虫类。当前可以先做风险分层，虫类判断仍需要虫体、地点和时间线。"
+    };
+  }
+  return {
+    level: riskLevel(top?.score || 30),
+    title: "可进入待识别队列",
+    body: "信息结构比较完整。当前先给出规则预判，后续接入 AI 识图后，可把虫体照片送入模型并返回更明确的识别结果。"
+  };
+}
+
+function reportEvidenceChecklist(report) {
+  const items = [
+    ["虫体照片", report.photoKinds.includes("虫体照片"), "决定识别质量"],
+    ["伤口/皮肤反应", report.photoKinds.includes("叮咬反应照片"), "只做风险提示"],
+    ["环境照片", report.photoKinds.includes("环境照片"), "判断来源和处理方式"],
+    ["地点描述", Boolean(report.place), "关联杭州场景风险"],
+    ["文字描述", Boolean(report.text), "补充行为和时间线"]
+  ];
+  return items.map(([label, done, note]) => `
+    <div class="evidence-item ${done ? "done" : ""}">
+      <strong>${label}</strong>
+      <span>${done ? "已提供" : "待补充"} · ${note}</span>
+    </div>
+  `).join("");
+}
+
+function renderReportResult() {
+  const params = new URLSearchParams((location.hash.split("?")[1] || ""));
+  const report = findReportById(params.get("id"));
+  if (!report) {
+    return appFrame(`
+      <section class="page-title">
+        <h1>待识别结果</h1>
+        <p>还没有找到可分析的上报记录。</p>
+      </section>
+      <div class="quick-actions"><a class="primary-btn" href="#/report">${icon("report")}去上报</a></div>
+    `);
+  }
+  const candidates = reportCandidates(report);
+  const advice = reportRiskAdvice(report, candidates);
+  return appFrame(`
+    <button class="back-btn" data-route="report">${icon("back")}继续上报</button>
+    <section class="report-result-hero card section">
+      <span class="pill ${levelClass(advice.level)}">待识别 · ${advice.level}风险</span>
+      <h1>${advice.title}</h1>
+      <p>${advice.body}</p>
+      <div class="meta-row">
+        <span class="tag">${report.type}</span>
+        <span class="tag">${report.place}</span>
+        <span class="tag">照片 ${report.photoCount} 张</span>
+      </div>
+    </section>
+    <section class="result-panel card">
+      <div class="section-head"><h2>可能虫类</h2><span class="pill mid">规则预判</span></div>
+      ${candidates.map(candidateRow).join("")}
+    </section>
+    <section class="report-result-grid section">
+      <article class="card report-result-card">
+        <div class="section-head"><h2>证据完整度</h2><span class="pill low">MVP</span></div>
+        <div class="evidence-list">${reportEvidenceChecklist(report)}</div>
+      </article>
+      <article class="card report-result-card">
+        <div class="section-head"><h2>下一步</h2><span class="pill mid">待接 AI</span></div>
+        <ul class="action-list">
+          <li>虫体照片进入识别队列，返回候选虫类和置信度。</li>
+          <li>伤口/皮肤反应只进入风险提示，不输出医学诊断。</li>
+          <li>环境照片用于判断源头：积水、地漏、厨房、草丛或宠物区域。</li>
+          <li>高风险或低置信记录进入人工/专家复核。</li>
+        </ul>
+      </article>
+    </section>
+    <section class="section">
+      <div class="quick-actions">
+        <a class="primary-btn" href="#/detail?id=${candidates[0]?.bug.id || "mosquito"}">${icon("bug")}查看最可能虫类</a>
+        <a class="secondary-btn" href="#/admin">${icon("radar")}查看后台记录</a>
+      </div>
+    </section>
+  `);
 }
 
 function countBy(items, getter) {
@@ -1348,6 +1480,7 @@ function saveReport() {
     document.querySelector("#report-pattern")?.value
   ].filter(Boolean);
   const report = {
+    id: `report-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     type,
     place,
     bug,
@@ -1372,8 +1505,8 @@ function saveReport() {
   syncReportToRemote(report);
   state.reportPhotos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
   state.reportPhotos = [];
-  showToast(supabaseEnabled() ? "已提交，上报会尝试同步到云端数据库。" : "已提交模拟上报，首页和出门页会以低权重参考。");
-  render();
+  location.hash = `#/report-result?id=${encodeURIComponent(report.id)}`;
+  showToast(supabaseEnabled() ? "已提交，已进入待识别队列并尝试同步云端。" : "已提交，已生成待识别结果。");
 }
 
 async function loadWeather() {
@@ -1599,6 +1732,7 @@ function route() {
     detail: renderDetail,
     family: renderFamily,
     report: renderReport,
+    "report-result": renderReportResult,
     admin: renderAdmin,
     demo: renderDemoGuide
   };
