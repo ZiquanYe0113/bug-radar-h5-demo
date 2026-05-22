@@ -72,6 +72,29 @@ const imageManifest = {
     bite: "./assets/images/bites/placeholder-bite.svg",
     habitat: "./assets/images/habitats/placeholder-habitat.svg"
   },
+  bugs: {
+    midge: { src: "./assets/images/bugs/midge-01.jpg", source: "Wikimedia Commons / USDA ARS, Scott Bauer", license: "Public domain (USDA)", verify: "需昆虫/疾控核验" },
+    mosquito: { src: "./assets/images/bugs/mosquito-01.jpg", source: "Wikimedia Commons / CDC, James Gathany", license: "Public domain (CDC)", verify: "需昆虫/疾控核验" },
+    chironomid: { src: "./assets/images/bugs/chironomid-01.jpg", source: "Wikimedia Commons / Judy Gallagher", license: "CC BY 2.0", verify: "需昆虫/疾控核验" },
+    blackfly: { src: "./assets/images/bugs/blackfly-01.png", source: "Wikimedia Commons / USDA", license: "Public domain (USDA)", verify: "需昆虫/疾控核验" },
+    tick: { src: "./assets/images/bugs/tick-01.jpg", source: "Wikimedia Commons / Francisco Welter-Schultes", license: "CC0 1.0", verify: "高风险内容需专家核验" },
+    rove: { src: "./assets/images/bugs/rove-01.png", source: "Wikimedia Commons / U.S. Army Public Health Command", license: "Public domain (U.S. Army)", verify: "需皮肤科/疾控核验" },
+    flea: { src: "./assets/images/bugs/flea-01.png", source: "Wikimedia Commons / Des Helmore, Manaaki Whenua Landcare Research", license: "CC BY 4.0", verify: "需昆虫/疾控核验" },
+    cockroach: { src: "./assets/images/bugs/cockroach-01.jpg", source: "Wikimedia Commons / ProjectManhattan", license: "CC0 1.0", verify: "需消杀专家核验" },
+    drainfly: { src: "./assets/images/bugs/drainfly-01.jpg", source: "Wikimedia Commons / Martin Cooper", license: "CC BY 2.0", verify: "需消杀/环境卫生核验" },
+    fruitfly: { src: "./assets/images/bugs/fruitfly-01.jpg", source: "Wikimedia Commons / Mr.checker", license: "CC BY-SA 2.5", verify: "需环境卫生核验" }
+  },
+  bites: {
+    mosquito: { src: "./assets/images/bites/mosquito-bite-01.svg", source: "Wikimedia Commons / Openclipart, j4p4n", license: "CC0 1.0", verify: "示意图，非医学诊断" },
+    paederus: { src: "./assets/images/bites/paederus-dermatitis-01.png", source: "Wikimedia Commons / U.S. Army Public Health Command", license: "Public domain (U.S. Army)", verify: "医学/隐私复核后使用" },
+    tick: { src: "./assets/images/bites/tick-eschar-01.jpg", source: "Wikimedia Commons / U.S. federal government", license: "Public domain (U.S. federal work)", verify: "医学/疾控复核后使用" }
+  },
+  habitats: {
+    westLake: { src: "./assets/images/habitats/west-lake-01.jpg", source: "Wikimedia Commons / jaaron", license: "CC BY 2.0", verify: "场景参考" },
+    xixi: { src: "./assets/images/habitats/xixi-wetland-01.jpg", source: "Wikimedia Commons / Takashishin", license: "CC BY 4.0", verify: "场景参考" },
+    qiantang: { src: "./assets/images/habitats/qiantang-river-01.jpg", source: "Wikimedia Commons / gwydionwilliams", license: "CC BY 2.0", verify: "场景参考" },
+    mountain: { src: "./assets/images/habitats/hangzhou-mountain-01.jpg", source: "Wikimedia Commons / Jacob Ehnmark", license: "CC BY 2.0", verify: "场景参考" }
+  },
   meta: {
     placeholderSource: "本地占位图",
     placeholderLicense: "待替换为自有拍摄或开放授权素材",
@@ -243,27 +266,61 @@ function photoItem(kind, label, src, options = {}) {
   };
 }
 
+function assetPhoto(kind, label, asset, fallback) {
+  const resolved = asset || { src: fallback };
+  return photoItem(kind, label, resolved.src, {
+    source: resolved.source,
+    license: resolved.license,
+    verify: resolved.verify
+  });
+}
+
+function habitatAssetForBug(bug) {
+  const dict = {
+    midge: imageManifest.habitats.westLake,
+    mosquito: imageManifest.habitats.xixi,
+    chironomid: imageManifest.habitats.qiantang,
+    blackfly: imageManifest.habitats.mountain,
+    tick: imageManifest.habitats.mountain,
+    rove: imageManifest.habitats.westLake,
+    flea: imageManifest.habitats.xixi
+  };
+  return dict[bug.id] || imageManifest.habitats.westLake;
+}
+
+function biteAssetForBug(bug) {
+  const dict = {
+    tick: imageManifest.bites.tick,
+    rove: imageManifest.bites.paederus,
+    mosquito: imageManifest.bites.mosquito,
+    midge: imageManifest.bites.mosquito,
+    blackfly: imageManifest.bites.mosquito,
+    flea: imageManifest.bites.mosquito
+  };
+  return dict[bug.id] || imageManifest.bites.mosquito;
+}
+
 function bugImageSet(bug) {
   return [
-    photoItem("虫体", `${bug.name}虫体`, imageManifest.placeholders.bug),
-    photoItem("环境", "典型场景", imageManifest.placeholders.habitat),
-    photoItem("叮咬反应", "叮咬/接触反应", imageManifest.placeholders.bite)
+    assetPhoto("虫体", `${bug.name}虫体`, imageManifest.bugs[bug.id], imageManifest.placeholders.bug),
+    assetPhoto("环境", "典型场景", habitatAssetForBug(bug), imageManifest.placeholders.habitat),
+    assetPhoto("叮咬反应", "叮咬/接触反应", biteAssetForBug(bug), imageManifest.placeholders.bite)
   ];
 }
 
 function biteImageSet() {
   return [
-    photoItem("叮咬反应", "多发红斑", imageManifest.placeholders.bite),
-    photoItem("叮咬反应", "成串脚踝", imageManifest.placeholders.bite),
-    photoItem("叮咬反应", "条索状红斑", imageManifest.placeholders.bite)
+    assetPhoto("叮咬反应", "蚊虫叮咬示意", imageManifest.bites.mosquito, imageManifest.placeholders.bite),
+    assetPhoto("叮咬反应", "隐翅虫接触反应", imageManifest.bites.paederus, imageManifest.placeholders.bite),
+    assetPhoto("叮咬反应", "蜱/螨叮咬严重反应", imageManifest.bites.tick, imageManifest.placeholders.bite)
   ];
 }
 
 function seenImageSet() {
   return [
-    photoItem("虫体", "虫体近照", imageManifest.placeholders.bug),
-    photoItem("环境", "停留环境", imageManifest.placeholders.habitat),
-    photoItem("特征", "对比特征", imageManifest.placeholders.bug)
+    assetPhoto("虫体", "虫体近照", imageManifest.bugs.midge, imageManifest.placeholders.bug),
+    assetPhoto("环境", "停留环境", imageManifest.habitats.xixi, imageManifest.placeholders.habitat),
+    assetPhoto("特征", "对比特征", imageManifest.bugs.blackfly, imageManifest.placeholders.bug)
   ];
 }
 
@@ -444,7 +501,7 @@ function renderDemoGuide() {
     <section class="section">
       <div class="tip-card">
         <h3>当前边界</h3>
-        <p class="subtle">图片仍为本地占位素材；叮咬图只做风险提示，不做医学诊断。天气、定位、真实地图、真实图片授权和专家核验是下一阶段接入项。</p>
+        <p class="subtle">已放入首批开放授权/公共领域图片；叮咬图只做风险提示，不做医学诊断。天气、定位、真实地图和专家核验仍是下一阶段接入项。</p>
       </div>
     </section>
     <section class="section">

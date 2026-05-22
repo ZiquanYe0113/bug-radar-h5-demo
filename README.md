@@ -74,13 +74,15 @@ SUPABASE_SCHEMA.sql
 
 ## 图片素材
 
-图片系统已经接入 `imageManifest`，当前使用本地 SVG 占位图：
+图片系统已经接入 `imageManifest`，并放入首批开放授权/公共领域素材：
 
-- `assets/images/bugs/placeholder-bug.svg`
-- `assets/images/bites/placeholder-bite.svg`
-- `assets/images/habitats/placeholder-habitat.svg`
+- `assets/images/bugs/`：虫体照片或图鉴图。
+- `assets/images/bites/`：叮咬、蜱/螨、隐翅虫接触反应示例。
+- `assets/images/habitats/`：西湖、西溪、钱塘江、杭州山地等场景图。
 
-替换真实图片时，需要记录来源、授权、素材类型、专家核验状态和隐私/医学风险。叮咬反应图只用于风险提示，不能替代医生诊断。
+素材来源、作者和授权记录在 `assets/images/README.md`。当前素材满足 Demo 合规展示和来源追溯要求，但 CC BY / CC BY-SA 图片需要保留署名；如果后续商业化想尽量减少授权条件，建议逐步替换为自有拍摄、CC0 或公共领域素材。
+
+叮咬反应图只用于风险提示，不能替代医生诊断；上线前仍需要医学、疾控或专业消杀人员核验。
 
 用户上传照片当前采用隐私友好 Demo 流程：浏览器内可以预览，但提交时只记录照片分类、文件名、大小和 MIME 类型，不把图片原图写入 localStorage。后续接真实存储时，虫体照片可进入 AI 识别队列，叮咬反应照片默认进入人工/医学风险提示队列。
 
@@ -93,7 +95,7 @@ SUPABASE_SCHEMA.sql
 
 ## 下一步接入
 
-- 真实虫体和叮咬图片素材。
+- 杭州本地自采虫体、场景和叮咬反应素材。
 - 高德地图 Key、Supabase 项目和线上上报审核后台。
 - 更细的杭州区域规则。
 - AI 识图：虫体照片优先，叮咬反应图只做低置信提示。
