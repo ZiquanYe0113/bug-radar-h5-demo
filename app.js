@@ -970,6 +970,7 @@ function renderReport() {
         <label for="report-text">补充描述</label>
         <textarea class="textarea" id="report-text">${reportDefaultText(type)}</textarea>
       </div>
+      ${reportPhotoGuidance(type)}
       ${photoUploadPanel(type)}
       <div class="report-privacy">
         <strong>隐私提示</strong>
@@ -1064,26 +1065,14 @@ function reportDynamicFields(type) {
 }
 
 function photoUploadPanel(type) {
-  const slots = type === "被咬了"
-    ? [
-      ["bite", "叮咬反应照片", "只做风险提示，不做诊断"],
-      ["bug", "虫体照片", "如果看到虫，优先上传虫体"]
-    ]
-    : type === "看到虫"
-      ? [
-        ["bug", "虫体照片", "优先用于后续 AI 识别"],
-        ["habitat", "出现环境照片", "帮助判断近水、草丛、地漏等场景"]
-      ]
-      : [
-        ["bug", "虫体照片", "拍清虫体或活动痕迹"],
-        ["habitat", "出现位置照片", "地漏、厨房、宠物窝等环境"]
-      ];
+  const slots = photoSlotsForType(type);
   return `
     <div class="field">
       <label>照片材料</label>
       <div class="upload-grid">
-        ${slots.map(([kind, title, note]) => uploadSlot(kind, title, note)).join("")}
+        ${slots.map(uploadSlot).join("")}
       </div>
+      ${photoUploadChecklist(slots)}
       <div class="photo-preview-list" id="photo-preview-list">
         ${state.reportPhotos.length ? state.reportPhotos.map(photoPreviewItem).join("") : `<div class="subtle">未添加照片。演示版只记录照片类型和文件信息。</div>`}
       </div>
@@ -1091,12 +1080,82 @@ function photoUploadPanel(type) {
   `;
 }
 
-function uploadSlot(kind, title, note) {
+function photoSlotsForType(type) {
+  const common = {
+    bug: {
+      kind: "bug",
+      title: "虫体照片",
+      tip: "拍清虫体外形，优先用于后续 AI 识别",
+      role: "识别核心"
+    },
+    bite: {
+      kind: "bite",
+      title: "伤口/皮肤反应",
+      tip: "只做风险提示，不做医学诊断",
+      role: "非诊断"
+    },
+    habitat: {
+      kind: "habitat",
+      title: "环境照片",
+      tip: "拍出现地点，帮助判断来源和处理方式",
+      role: "场景线索"
+    }
+  };
+  if (type === "被咬了") {
+    return [
+      { ...common.bite, priority: "建议上传" },
+      { ...common.bug, priority: "看到虫再传" },
+      { ...common.habitat, priority: "建议上传" }
+    ];
+  }
+  if (type === "看到虫") {
+    return [
+      { ...common.bug, priority: "建议上传" },
+      { ...common.habitat, priority: "建议上传" },
+      { ...common.bite, priority: "被咬再传" }
+    ];
+  }
+  return [
+    { ...common.bug, priority: "建议上传" },
+    { ...common.habitat, priority: "建议上传" },
+    { ...common.bite, priority: "被咬再传" }
+  ];
+}
+
+function reportPhotoGuidance(type) {
+  const title = type === "被咬了" ? "先判断风险，再补充证据" : type === "看到虫" ? "先拍虫体，再补充环境" : "先定位来源，再判断处理方式";
+  const body = type === "被咬了"
+    ? "伤口照片只能帮助判断是否需要就医或人工核验；真正用于识别虫类的，仍然是虫体照片和发生地点。"
+    : type === "看到虫"
+      ? "虫体照片决定识别质量，环境照片能判断它为什么出现；如果没有被咬，不需要上传皮肤照片。"
+      : "家中虫害更依赖出现位置和环境线索；虫体照片用于分辨种类，环境照片用于判断源头。";
   return `
-    <label class="upload-slot">
-      <input type="file" accept="image/*" data-photo-kind="${kind}" />
+    <div class="report-photo-guidance">
       <strong>${title}</strong>
-      <span>${note}</span>
+      <span>${body}</span>
+    </div>
+  `;
+}
+
+function photoUploadChecklist(slots) {
+  return `
+    <div class="photo-checklist">
+      ${slots.map((slot) => {
+        const count = state.reportPhotos.filter((photo) => photo.kind === slot.kind).length;
+        return `<span class="${count ? "done" : ""}">${slot.title}${count ? ` ${count}` : ""}</span>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+function uploadSlot(slot) {
+  return `
+    <label class="upload-slot ${slot.kind}">
+      <input type="file" accept="image/*" multiple data-photo-kind="${slot.kind}" />
+      <em>${slot.priority}</em>
+      <strong>${slot.title}</strong>
+      <span>${slot.tip}</span>
+      <small>${slot.role}</small>
     </label>
   `;
 }
