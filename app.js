@@ -316,12 +316,46 @@ function biteImageSet() {
   ];
 }
 
-function seenImageSet() {
-  return [
-    assetPhoto("虫体", "虫体近照", imageManifest.bugs.midge, imageManifest.placeholders.bug),
-    assetPhoto("环境", "停留环境", imageManifest.habitats.xixi, imageManifest.placeholders.habitat),
-    assetPhoto("特征", "对比特征", imageManifest.bugs.blackfly, imageManifest.placeholders.bug)
-  ];
+function seenImageSet(sighting) {
+  const profiles = {
+    "贴肤小黑点": [
+      ["midge", "更像蠓：贴肤小黑点"],
+      ["flea", "易混淆：跳蚤"],
+      ["mosquito", "对照：蚊子"]
+    ],
+    "湖边成团飞舞": [
+      ["chironomid", "更像摇蚊：湖边成团飞舞"],
+      ["midge", "易混淆：蠓"],
+      ["mosquito", "对照：蚊子"]
+    ],
+    "八足附着": [
+      ["tick", "更像蜱虫：八足附着"],
+      ["flea", "易混淆：跳蚤"],
+      ["midge", "对照：小型飞虫"]
+    ],
+    "黑橙细长虫": [
+      ["rove", "更像隐翅虫：黑橙细长"],
+      ["cockroach", "易混淆：蟑螂若虫"],
+      ["blackfly", "对照：黑色小飞虫"]
+    ],
+    "厨房爬行": [
+      ["cockroach", "更像蟑螂：厨房爬行"],
+      ["flea", "易混淆：跳蚤"],
+      ["fruitfly", "对照：果蝇"]
+    ],
+    "地漏小飞虫": [
+      ["drainfly", "更像蛾蚋：地漏小飞虫"],
+      ["fruitfly", "易混淆：果蝇"],
+      ["midge", "对照：蠓"]
+    ],
+    "水果旁小飞虫": [
+      ["fruitfly", "更像果蝇：水果旁小飞虫"],
+      ["drainfly", "易混淆：蛾蚋"],
+      ["chironomid", "对照：摇蚊"]
+    ]
+  };
+  const items = profiles[sighting] || profiles["贴肤小黑点"];
+  return items.map(([id, label]) => assetPhoto("虫体", label, imageManifest.bugs[id], imageManifest.placeholders.bug));
 }
 
 function normalizePhotoItem(item) {
@@ -804,7 +838,7 @@ function renderSeen() {
       </div>
     </section>
     <section class="section">
-      ${photoStrip("虫体照片示例位", seenImageSet(), "后续可接自有拍摄、开放授权图库或用户上传；先按虫体和环境两类保存。")}
+      ${photoStrip("虫体照片示例位", seenImageSet(state.sighting), "示例会随上方选择变化；用于观察外形差异，最终识别仍需照片、地点和专家/模型核验。")}
     </section>
     <section class="result-panel card">
       <div class="section-head"><h2>识别候选</h2><span class="pill low">需核验</span></div>
