@@ -5,6 +5,7 @@ create table if not exists public.bug_reports (
   bug text not null,
   text text,
   extra jsonb default '[]'::jsonb,
+  photos jsonb default '[]'::jsonb,
   latitude double precision,
   longitude double precision,
   status text not null default 'pending',

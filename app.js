@@ -52,6 +52,7 @@ const state = {
   familyBug: "mosquito",
   planScenario: "西湖景区山脚短停",
   reportType: "被咬了",
+  reportPhotos: [],
   weather: {
     status: "idle",
     summary: "等待联网获取",
@@ -878,13 +879,13 @@ function renderReport() {
         <label for="report-text">补充描述</label>
         <textarea class="textarea" id="report-text">${reportDefaultText(type)}</textarea>
       </div>
+      ${photoUploadPanel(type)}
       <div class="report-privacy">
         <strong>隐私提示</strong>
-        <span>仅保存文字模拟数据；后续接入照片时会区分虫体照片和叮咬反应照片，默认不公开敏感图片。</span>
+        <span>当前只保存照片元信息，不保存图片原图；虫体照用于识别，叮咬反应照只做风险提示，不作医学诊断。</span>
       </div>
       <div class="quick-actions">
         <button class="primary-btn" id="submit-report">${icon("report")}提交上报</button>
-        <button class="secondary-btn" data-toast="照片上传将在后续接入，区分虫体照片和叮咬反应照片，默认不保存敏感图片。">${icon("eye")}添加照片</button>
         <button class="secondary-btn" data-route="admin">${icon("radar")}查看上报后台</button>
       </div>
     </section>
@@ -971,6 +972,73 @@ function reportDynamicFields(type) {
   `;
 }
 
+function photoUploadPanel(type) {
+  const slots = type === "被咬了"
+    ? [
+      ["bite", "叮咬反应照片", "只做风险提示，不做诊断"],
+      ["bug", "虫体照片", "如果看到虫，优先上传虫体"]
+    ]
+    : type === "看到虫"
+      ? [
+        ["bug", "虫体照片", "优先用于后续 AI 识别"],
+        ["habitat", "出现环境照片", "帮助判断近水、草丛、地漏等场景"]
+      ]
+      : [
+        ["bug", "虫体照片", "拍清虫体或活动痕迹"],
+        ["habitat", "出现位置照片", "地漏、厨房、宠物窝等环境"]
+      ];
+  return `
+    <div class="field">
+      <label>照片材料</label>
+      <div class="upload-grid">
+        ${slots.map(([kind, title, note]) => uploadSlot(kind, title, note)).join("")}
+      </div>
+      <div class="photo-preview-list" id="photo-preview-list">
+        ${state.reportPhotos.length ? state.reportPhotos.map(photoPreviewItem).join("") : `<div class="subtle">未添加照片。演示版只记录照片类型和文件信息。</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function uploadSlot(kind, title, note) {
+  return `
+    <label class="upload-slot">
+      <input type="file" accept="image/*" data-photo-kind="${kind}" />
+      <strong>${title}</strong>
+      <span>${note}</span>
+    </label>
+  `;
+}
+
+function photoPreviewItem(photo, index) {
+  return `
+    <article class="photo-preview">
+      <img src="${photo.previewUrl}" alt="${photo.label}" />
+      <div>
+        <strong>${photo.label}</strong>
+        <span>${photo.name} · ${formatFileSize(photo.size)}</span>
+        <small>${photo.kindLabel}</small>
+      </div>
+      <button type="button" class="icon-btn photo-remove" data-remove-photo="${index}" aria-label="移除照片">×</button>
+    </article>
+  `;
+}
+
+function photoKindLabel(kind) {
+  const dict = {
+    bug: "虫体照片",
+    bite: "叮咬反应照片",
+    habitat: "环境照片"
+  };
+  return dict[kind] || "照片";
+}
+
+function formatFileSize(size) {
+  if (!Number.isFinite(size)) return "未知大小";
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))}KB`;
+  return `${(size / 1024 / 1024).toFixed(1)}MB`;
+}
+
 function reportItem(item) {
   const normalized = normalizeReport(item);
   return `
@@ -980,7 +1048,10 @@ function reportItem(item) {
         <span class="pill ${normalized.status === "pending" ? "mid" : "low"}">${normalized.type}</span>
       </div>
       <div class="subtle">${normalized.place} · ${normalized.text}</div>
-      ${normalized.extra.length ? `<div class="meta-row">${normalized.extra.map((x) => `<span class="tag">${x}</span>`).join("")}</div>` : ""}
+      <div class="meta-row">
+        ${normalized.photoCount ? `<span class="tag">有图 ${normalized.photoCount} 张</span>` : `<span class="tag">无图</span>`}
+        ${normalized.extra.map((x) => `<span class="tag">${x}</span>`).join("")}
+      </div>
     </article>
   `;
 }
@@ -992,6 +1063,9 @@ function normalizeReport(item) {
     bug: item.bug || "不确定",
     text: item.text || "无补充描述",
     extra: Array.isArray(item.extra) ? item.extra.filter(Boolean) : [],
+    photos: Array.isArray(item.photos) ? item.photos : [],
+    photoCount: Number(item.photoCount ?? item.photos?.length ?? 0),
+    photoKinds: Array.isArray(item.photoKinds) ? item.photoKinds : Array.isArray(item.photos) ? item.photos.map((photo) => photo.kindLabel || photoKindLabel(photo.kind)) : [],
     status: item.status || (item.createdAt ? "pending" : "seeded"),
     createdAt: item.createdAt || item.created_at || ""
   };
@@ -1018,6 +1092,7 @@ function shortPlace(place) {
 function renderAdmin() {
   const reports = getReports().map(normalizeReport);
   const pending = reports.filter((report) => report.status === "pending").length;
+  const withPhotos = reports.filter((report) => report.photoCount > 0).length;
   const bugRows = topCounts(reports, (report) => report.bug, 5);
   const placeRows = topCounts(reports, (report) => shortPlace(report.place), 5);
   const maxBug = Math.max(...bugRows.map((row) => row[1]), 1);
@@ -1031,7 +1106,7 @@ function renderAdmin() {
     <section class="admin-stats">
       ${adminStat("总上报", reports.length, "含本地、云端和演示种子")}
       ${adminStat("待审核", pending, "用户新增默认待审核")}
-      ${adminStat("重点虫类", bugRows[0]?.[0] || "暂无", "当前样本最高频")}
+      ${adminStat("含图片", withPhotos, "虫体、伤口或环境照片")}
     </section>
     <section class="section">
       <div class="quick-actions">
@@ -1087,7 +1162,11 @@ function adminReportItem(report) {
       </div>
       <div class="subtle">${report.type} · ${report.place}</div>
       <p>${report.text}</p>
-      ${report.extra.length ? `<div class="meta-row">${report.extra.map((x) => `<span class="tag">${x}</span>`).join("")}</div>` : ""}
+      <div class="meta-row">
+        ${report.photoCount ? `<span class="tag">有图 ${report.photoCount} 张</span>` : `<span class="tag">无图</span>`}
+        ${report.photoKinds.map((kind) => `<span class="tag">${kind}</span>`).join("")}
+        ${report.extra.map((x) => `<span class="tag">${x}</span>`).join("")}
+      </div>
     </article>
   `;
 }
@@ -1124,6 +1203,15 @@ function saveReport() {
     bug,
     text,
     extra,
+    photos: state.reportPhotos.map((photo) => ({
+      kind: photo.kind,
+      kindLabel: photo.kindLabel,
+      name: photo.name,
+      size: photo.size,
+      fileType: photo.fileType
+    })),
+    photoCount: state.reportPhotos.length,
+    photoKinds: [...new Set(state.reportPhotos.map((photo) => photo.kindLabel))],
     latitude: defaultLocation.latitude,
     longitude: defaultLocation.longitude,
     createdAt: new Date().toISOString()
@@ -1132,6 +1220,8 @@ function saveReport() {
   const next = [report, ...stored].slice(0, 12);
   localStorage.setItem("bugReports", JSON.stringify(next));
   syncReportToRemote(report);
+  state.reportPhotos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+  state.reportPhotos = [];
   showToast(supabaseEnabled() ? "已提交，上报会尝试同步到云端数据库。" : "已提交模拟上报，首页和出门页会以低权重参考。");
   render();
 }
@@ -1173,7 +1263,7 @@ async function loadRemoteReports() {
   state.remoteReportsLoaded = true;
   const base = supabaseConfig.url.replace(/\/$/, "");
   const table = encodeURIComponent(supabaseConfig.table);
-  const endpoint = `${base}/rest/v1/${table}?select=type,place,bug,text,extra,status,created_at&order=created_at.desc&limit=20`;
+  const endpoint = `${base}/rest/v1/${table}?select=type,place,bug,text,extra,photos,status,created_at&order=created_at.desc&limit=20`;
   try {
     const res = await fetch(endpoint, {
       headers: {
@@ -1189,6 +1279,7 @@ async function loadRemoteReports() {
       bug: row.bug,
       text: row.text,
       extra: Array.isArray(row.extra) ? row.extra : [],
+      photos: Array.isArray(row.photos) ? row.photos : [],
       status: row.status || "pending",
       createdAt: row.created_at
     }));
@@ -1209,6 +1300,7 @@ async function syncReportToRemote(report) {
     bug: report.bug,
     text: report.text,
     extra: report.extra,
+    photos: report.photos,
     latitude: report.latitude,
     longitude: report.longitude,
     status: "pending"
@@ -1292,17 +1384,45 @@ function csvCell(value) {
 }
 
 function reportsToCsv(reports) {
-  const header = ["type", "place", "bug", "text", "extra", "status", "createdAt"];
+  const header = ["type", "place", "bug", "text", "extra", "photoCount", "photoKinds", "status", "createdAt"];
   const rows = reports.map((report) => [
     report.type,
     report.place,
     report.bug,
     report.text,
     report.extra.join("|"),
+    report.photoCount,
+    report.photoKinds.join("|"),
     report.status,
     report.createdAt
   ]);
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+}
+
+function handlePhotoChange(event) {
+  const input = event.target;
+  const kind = input.dataset.photoKind;
+  const files = [...(input.files || [])].slice(0, 3);
+  if (!files.length) return;
+  const nextPhotos = files.map((file) => ({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    kind,
+    kindLabel: photoKindLabel(kind),
+    label: photoKindLabel(kind),
+    name: file.name,
+    size: file.size,
+    fileType: file.type || "image/*",
+    previewUrl: URL.createObjectURL(file)
+  }));
+  state.reportPhotos = [...state.reportPhotos, ...nextPhotos].slice(0, 6);
+  render();
+}
+
+function removeReportPhoto(index) {
+  const photo = state.reportPhotos[index];
+  if (photo?.previewUrl) URL.revokeObjectURL(photo.previewUrl);
+  state.reportPhotos = state.reportPhotos.filter((_, itemIndex) => itemIndex !== index);
+  render();
 }
 
 function exportReportsCsv() {
@@ -1347,6 +1467,10 @@ function bindEvents() {
       const target = event.target.closest("[data-value]");
       if (!target) return;
       state[group.dataset.state] = target.dataset.value;
+      if (group.dataset.state === "reportType") {
+        state.reportPhotos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+        state.reportPhotos = [];
+      }
       render();
     });
   });
@@ -1357,6 +1481,12 @@ function bindEvents() {
 
   document.querySelector("#submit-report")?.addEventListener("click", saveReport);
   document.querySelector("#export-reports")?.addEventListener("click", exportReportsCsv);
+  document.querySelectorAll("[data-photo-kind]").forEach((input) => {
+    input.addEventListener("change", handlePhotoChange);
+  });
+  document.querySelectorAll("[data-remove-photo]").forEach((button) => {
+    button.addEventListener("click", () => removeReportPhoto(Number(button.dataset.removePhoto)));
+  });
 }
 
 function render() {
