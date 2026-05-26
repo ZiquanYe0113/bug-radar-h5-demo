@@ -505,6 +505,30 @@ button {
   margin-top: 12px;
 }
 
+.report-home-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #cfe0d5;
+  border-radius: 8px;
+  background: #f6faf7;
+}
+
+.report-home-card h2 {
+  margin: 8px 0 6px;
+  color: var(--ink);
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.report-home-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .primary-btn,
 .secondary-btn,
 .text-btn {
@@ -589,6 +613,76 @@ button {
 
 .admin-card {
   padding: 12px;
+}
+
+.service-alert {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  background: #fffaf3;
+  border-color: #ead7bd;
+}
+
+.service-alert .icon {
+  color: #9a5c00;
+}
+
+.service-alert div {
+  display: grid;
+  gap: 4px;
+}
+
+.service-alert strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.service-alert span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.service-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.service-card {
+  display: grid;
+  gap: 12px;
+}
+
+.service-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.service-funnel {
+  display: grid;
+  gap: 12px;
+}
+
+.service-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.service-flow span {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfb;
+  color: var(--brand);
+  font-size: 12px;
+  text-align: center;
 }
 
 .metric-row {
@@ -1338,11 +1432,19 @@ button {
   .report-result-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .service-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 520px) {
   .upload-grid {
     grid-template-columns: 1fr;
+  }
+
+  .service-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

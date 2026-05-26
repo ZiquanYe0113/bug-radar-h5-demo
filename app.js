@@ -6,6 +6,7 @@ const icons = {
   eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>`,
   home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>`,
   report: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/><rect x="4" y="4" width="16" height="16" rx="3"/></svg>`,
+  service: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h18"/><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M6 11v8M18 11v8"/><path d="M9 15h6"/><path d="M8 19h8"/></svg>`,
   bug: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7a4 4 0 0 1 8 0v8a4 4 0 0 1-8 0Z"/><path d="M7 8H3M7 14H3M17 8h4M17 14h4M9 3l2 2M15 3l-2 2M9 19l-2 2M15 19l2 2"/></svg>`,
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>`,
   warn: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>`
@@ -415,7 +416,7 @@ function appFrame(content) {
       ${navItem("bite", "被咬了", "bite", route)}
       ${navItem("seen", "看到虫", "eye", route)}
       ${navItem("family", "家庭", "home", route)}
-      ${navItem("report", "上报", "report", route)}
+      ${navItem("services", "附近服务", "service", route)}
     </nav>
   `;
 }
@@ -454,6 +455,15 @@ function renderHome() {
         <a class="primary-btn" href="#/bite">${icon("bite")}我被咬了</a>
         <a class="secondary-btn" href="#/seen">${icon("eye")}看到虫了</a>
       </div>
+    </section>
+
+    <section class="section report-home-card">
+      <div>
+        <span class="pill mid">数据入口</span>
+        <h2>我来上报虫情</h2>
+        <p>看到虫、被咬了、家里有虫，都可以上传虫体、伤口或环境照片。上报会进入待识别结果页，并作为附近 7 天风险信号的一部分。</p>
+      </div>
+      <a class="primary-btn" href="#/report">${icon("report")}立即上报</a>
     </section>
 
     ${integrationPanel()}
@@ -937,6 +947,86 @@ function familyChecklist(id) {
     flea: ["宠物定期驱虫并咨询兽医", "清洗宠物窝、床品、地毯", "吸尘后及时处理尘袋", "人身叮咬与环境治理同步进行"]
   };
   return dict[id] || dict.mosquito;
+}
+
+function renderServices() {
+  const serviceGroups = [
+    {
+      title: "附近药店",
+      tag: "止痒/驱避",
+      body: "适合普通蚊虫叮咬后的止痒护理、驱蚊液、防蚊贴、消毒用品等购买场景。",
+      items: ["止痒护理", "有效成分驱蚊产品", "儿童/敏感人群先咨询药师"],
+      action: "查看药店"
+    },
+    {
+      title: "医院/皮肤科",
+      tag: "高风险优先",
+      body: "适合红肿扩大、明显疼痛、发热乏力、疑似蜱虫附着、隐翅虫接触后水疱等情况。",
+      items: ["皮肤科", "急诊/发热门诊", "疾控咨询入口"],
+      action: "查看就医点"
+    },
+    {
+      title: "防虫产品店",
+      tag: "家庭防护",
+      body: "适合纱窗纱门、地漏防虫、灭蟑胶饵、灭蚊灯、宠物驱虫和户外防蜱装备。",
+      items: ["纱窗/门缝封堵", "防虫地漏", "户外驱避装备"],
+      action: "查看产品"
+    },
+    {
+      title: "驱虫/消杀服务",
+      tag: "上门治理",
+      body: "适合蟑螂、跳蚤、蛾蚋、蚊虫滋生点等反复出现、自己处理无效的家庭或商铺场景。",
+      items: ["家庭消杀", "管道/地漏治理", "物业或社区工单"],
+      action: "联系服务"
+    }
+  ];
+  return appFrame(`
+    <section class="page-title">
+      <h1>附近服务</h1>
+      <p>商业化入口先按“可咨询、可购买、可处理”三类组织。医疗和商品服务分开表达，避免把科普建议写成诊断或处方。</p>
+    </section>
+    <section class="service-alert card">
+      ${icon("warn")}
+      <div>
+        <strong>先判断风险，再选择服务</strong>
+        <span>高风险叮咬优先就医或咨询专业人员；普通防护和家庭虫害再考虑药店、产品或上门服务。</span>
+      </div>
+    </section>
+    <section class="section">
+      <div class="service-grid">
+        ${serviceGroups.map(serviceCard).join("")}
+      </div>
+    </section>
+    <section class="section service-funnel card">
+      <div class="section-head">
+        <h2>后续可接的商业闭环</h2>
+        <span class="pill mid">MVP 预留</span>
+      </div>
+      <div class="service-flow">
+        <span>风险判断</span>
+        <span>附近匹配</span>
+        <span>电话/地图</span>
+        <span>成交/反馈</span>
+      </div>
+      <p class="subtle">这一页当前是展示型入口，后续可以接地图 POI、商家电话、商品链接、服务商报价和上报后的转化追踪。</p>
+    </section>
+  `);
+}
+
+function serviceCard(item) {
+  return `
+    <article class="service-card card">
+      <div class="section-head">
+        <h2>${item.title}</h2>
+        <span class="pill low">${item.tag}</span>
+      </div>
+      <p>${item.body}</p>
+      <div class="meta-row">
+        ${item.items.map((x) => `<span class="tag">${x}</span>`).join("")}
+      </div>
+      <button class="secondary-btn compact" data-toast="${item.title}后续可接地图 POI、电话或商品链接。">${icon("service")}${item.action}</button>
+    </article>
+  `;
 }
 
 function renderReport() {
@@ -1731,6 +1821,7 @@ function route() {
     seen: renderSeen,
     detail: renderDetail,
     family: renderFamily,
+    services: renderServices,
     report: renderReport,
     "report-result": renderReportResult,
     admin: renderAdmin,
