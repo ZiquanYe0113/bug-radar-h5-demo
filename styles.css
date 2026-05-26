@@ -817,6 +817,13 @@ button {
   font-size: 14px;
 }
 
+.field-hint {
+  margin: -2px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .segmented,
 .chips {
   display: flex;

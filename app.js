@@ -923,8 +923,9 @@ function renderFamily() {
       <p class="subtle">${active.protect}</p>
       <div class="field">
         <label>家庭排查清单</label>
+        <p class="field-hint">这些勾选只用于记录你自己的排查进度，不代表系统已经判断完成。</p>
         <div class="check-list">
-          ${familyChecklist(active.id).map((item, index) => `<label><input type="checkbox" ${index < 2 ? "checked" : ""}> ${item}</label>`).join("")}
+          ${familyChecklist(active.id).map((item) => `<label><input type="checkbox"> ${item}</label>`).join("")}
         </div>
       </div>
     </section>
@@ -1033,6 +1034,7 @@ function renderReport() {
   const reports = getReports();
   const type = state.reportType;
   return appFrame(`
+    <button class="back-btn" data-route="home">${icon("back")}返回首页</button>
     <section class="page-title">
       <h1>用户上报</h1>
       <p>上报会作为附近 7 天低权重信号进入 Demo 风险提示。照片默认不公开，叮咬图只做风险提示，不作医学诊断。</p>
