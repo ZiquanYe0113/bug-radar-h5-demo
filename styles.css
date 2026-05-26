@@ -615,12 +615,12 @@ button {
   padding: 12px;
 }
 
-.service-alert {
+.service-alert.card {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 10px;
+  gap: 14px;
   align-items: flex-start;
-  padding: 16px;
+  padding: 22px;
   background: #fffaf3;
   border-color: #ead7bd;
 }
@@ -647,18 +647,27 @@ button {
 
 .service-grid {
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
-.service-card {
+.service-card.card {
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 18px;
+  padding: 24px 22px 22px;
 }
 
 .service-card .section-head {
   margin-bottom: 0;
   align-items: flex-start;
+  gap: 14px;
+}
+
+.service-card .section-head h2 {
+  line-height: 1.2;
+}
+
+.service-card .pill {
+  flex: 0 0 auto;
 }
 
 .service-card p {
@@ -668,10 +677,10 @@ button {
   line-height: 1.6;
 }
 
-.service-funnel {
+.service-funnel.card {
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 18px;
+  padding: 22px;
 }
 
 .service-funnel .section-head {
@@ -1461,6 +1470,12 @@ button {
 @media (max-width: 520px) {
   .upload-grid {
     grid-template-columns: 1fr;
+  }
+
+  .service-alert.card,
+  .service-card.card,
+  .service-funnel.card {
+    padding: 18px;
   }
 
   .service-flow {
