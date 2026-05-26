@@ -620,6 +620,7 @@ button {
   grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: flex-start;
+  padding: 16px;
   background: #fffaf3;
   border-color: #ead7bd;
 }
@@ -646,12 +647,18 @@ button {
 
 .service-grid {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .service-card {
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  padding: 16px;
+}
+
+.service-card .section-head {
+  margin-bottom: 0;
+  align-items: flex-start;
 }
 
 .service-card p {
@@ -663,7 +670,12 @@ button {
 
 .service-funnel {
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  padding: 16px;
+}
+
+.service-funnel .section-head {
+  margin-bottom: 0;
 }
 
 .service-flow {
@@ -673,15 +685,16 @@ button {
 }
 
 .service-flow span {
-  min-height: 42px;
+  min-height: 46px;
   display: grid;
   place-items: center;
-  padding: 8px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfdfb;
   color: var(--brand);
   font-size: 12px;
+  line-height: 1.35;
   text-align: center;
 }
 
