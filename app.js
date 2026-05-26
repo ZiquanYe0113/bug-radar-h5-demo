@@ -87,6 +87,11 @@ const imageManifest = {
   },
   bites: {
     mosquito: { src: "./assets/images/bites/mosquito-bite-01.svg", source: "Wikimedia Commons / Openclipart, j4p4n", license: "CC0 1.0", verify: "示意图，非医学诊断" },
+    mosquitoWheal: { src: "./assets/images/bites/mosquito-wheal-01.jpg", source: "Wikimedia Commons / Manojkumar Subramani", license: "CC BY-SA 4.0", verify: "医学/隐私复核后使用" },
+    midgeBites: { src: "./assets/images/bites/midge-bites-01.jpg", source: "Wikimedia Commons / Uriel domini", license: "CC BY-SA 4.0", verify: "医学/疾控复核后使用" },
+    fleaBites: { src: "./assets/images/bites/flea-bites-01.jpg", source: "Wikimedia Commons / Clawed", license: "GFDL / CC BY-SA 3.0", verify: "医学/疾控复核后使用" },
+    linearUrticaria: { src: "./assets/images/bites/linear-urticaria-01.jpg", source: "Wikimedia Commons / Whispyhistory", license: "CC0 1.0", verify: "医学/疾控复核后使用" },
+    pustule: { src: "./assets/images/bites/pustule-bite-01.jpg", source: "Wikimedia Commons / Shoryuken", license: "Public domain", verify: "医学/疾控复核后使用" },
     paederus: { src: "./assets/images/bites/paederus-dermatitis-01.png", source: "Wikimedia Commons / U.S. Army Public Health Command", license: "Public domain (U.S. Army)", verify: "医学/隐私复核后使用" },
     tick: { src: "./assets/images/bites/tick-eschar-01.jpg", source: "Wikimedia Commons / U.S. federal government", license: "Public domain (U.S. federal work)", verify: "医学/疾控复核后使用" }
   },
@@ -309,12 +314,36 @@ function bugImageSet(bug) {
   ];
 }
 
-function biteImageSet() {
-  return [
-    assetPhoto("叮咬反应", "蚊虫叮咬示意", imageManifest.bites.mosquito, imageManifest.placeholders.bite),
-    assetPhoto("叮咬反应", "隐翅虫接触反应", imageManifest.bites.paederus, imageManifest.placeholders.bite),
-    assetPhoto("叮咬反应", "蜱/螨叮咬严重反应", imageManifest.bites.tick, imageManifest.placeholders.bite)
-  ];
+function biteImageSet(pattern) {
+  const profiles = {
+    "多个红斑肿块": [
+      ["midgeBites", "多发小飞虫/蠓叮咬红点"],
+      ["mosquitoWheal", "蚊咬风团对照"],
+      ["mosquito", "蚊虫叮咬示意"]
+    ],
+    "成串脚踝红疹": [
+      ["linearUrticaria", "成串红疹模式示例"],
+      ["fleaBites", "跳蚤/床虱样成组叮咬"],
+      ["midgeBites", "多发小飞虫叮咬对照"]
+    ],
+    "单个风团": [
+      ["mosquitoWheal", "单个蚊咬风团"],
+      ["mosquito", "蚊虫叮咬示意"],
+      ["midgeBites", "多发红点对照"]
+    ],
+    "八足附着": [
+      ["tick", "蜱/螨叮咬严重反应"],
+      ["mosquitoWheal", "普通风团对照"],
+      ["midgeBites", "多发小红点对照"]
+    ],
+    "条索状水疱": [
+      ["paederus", "隐翅虫接触反应"],
+      ["pustule", "水疱/脓疱样虫咬示例"],
+      ["tick", "严重反应对照"]
+    ]
+  };
+  const items = profiles[pattern] || profiles["多个红斑肿块"];
+  return items.map(([id, label]) => assetPhoto("叮咬反应", label, imageManifest.bites[id], imageManifest.placeholders.bite));
 }
 
 function seenImageSet(sighting) {
@@ -776,7 +805,7 @@ function renderBite() {
       </div>
     </section>
     <section class="section">
-      ${photoStrip("叮咬反应照片位", biteImageSet(), "后续可放真实伤口示例；需要标注来源、严重程度和“非诊断”提示。")}
+      ${photoStrip("叮咬反应照片位", biteImageSet(state.bitePattern), "示例会随上方表现切换；只做风险提示和素材参考，不能替代医生诊断。")}
     </section>
     <section class="result-panel card">
       <div class="section-head">

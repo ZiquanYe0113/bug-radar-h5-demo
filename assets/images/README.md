@@ -25,6 +25,11 @@ This folder holds the first open-license/public-domain image batch for the H5 de
 | `bugs/drainfly-01.jpg` | [Moth Fly (Psychodidae)](https://commons.wikimedia.org/wiki/File:Moth_Fly_(Psychodidae)_(12769359874).jpg) | Martin Cooper | CC BY 2.0 | 蛾蚋/下水道飞虫参考 |
 | `bugs/fruitfly-01.jpg` | [Drosophila melanogaster](https://commons.wikimedia.org/wiki/File:Drosophila_melanogaster_-_top_(aka).jpg) | Mr.checker | CC BY-SA 2.5 | 果蝇参考 |
 | `bites/mosquito-bite-01.svg` | [Mosquito_bite.svg](https://commons.wikimedia.org/wiki/File:Mosquito_bite.svg) | Openclipart / j4p4n | CC0 1.0 | 蚊虫叮咬示意 |
+| `bites/mosquito-wheal-01.jpg` | [Mosquito bite on hand.jpg](https://commons.wikimedia.org/wiki/File:Mosquito_bite_on_hand.jpg) | Manojkumar Subramani | CC BY-SA 4.0 | 单个蚊咬风团示例 |
+| `bites/midge-bites-01.jpg` | [Bites from Scotland midges.jpg](https://commons.wikimedia.org/wiki/File:Bites_from_Scotland_midges.jpg) | Uriel domini | CC BY-SA 4.0 | 多发小飞虫/蠓叮咬红点示例 |
+| `bites/flea-bites-01.jpg` | [Flea bites.jpg](https://commons.wikimedia.org/wiki/File:Flea_bites.jpg) | Clawed | GFDL / CC BY-SA 3.0 | 跳蚤/床虱样成组叮咬对照 |
+| `bites/linear-urticaria-01.jpg` | [Urticaria associated with breakfast, lunch, and dinner sign](https://commons.wikimedia.org/wiki/File:Urticaria_associated_with_%27breakfast,_lunch,_and_dinner_sign%27.jpg) | Whispyhistory | CC0 1.0 | 成串红疹模式示例 |
+| `bites/pustule-bite-01.jpg` | [Pustule insect bite.jpg](https://commons.wikimedia.org/wiki/File:Pustule_insect_bite.jpg) | Shoryuken | Public domain | 水疱/脓疱样虫咬示例 |
 | `bites/paederus-dermatitis-01.png` | [Paederus Beetles.pdf](https://commons.wikimedia.org/wiki/File:Paederus_Beetles.pdf) | U.S. Army Public Health Command | Public domain, U.S. Army | 隐翅虫接触反应示例 |
 | `bites/tick-eschar-01.jpg` | [EscharFromTick.jpg](https://commons.wikimedia.org/wiki/File:EscharFromTick.jpg) | CDC | Public domain, U.S. federal work | 蜱/螨叮咬严重反应示例 |
 | `habitats/west-lake-01.jpg` | [West_Lake_Hangzhou.jpg](https://commons.wikimedia.org/wiki/File:West_Lake_Hangzhou.jpg) | jaaron | CC BY 2.0 | 西湖湖滨/水边场景 |
