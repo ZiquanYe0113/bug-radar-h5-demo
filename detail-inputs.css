@@ -1,0 +1,14 @@
+.compact-field {
+  padding: 10px;
+  border: 1px solid #d7e5dc;
+  border-radius: 8px;
+  background: #fbfdfb;
+}
+
+.compact-textarea {
+  min-height: 58px;
+  max-height: 120px;
+  padding: 9px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
